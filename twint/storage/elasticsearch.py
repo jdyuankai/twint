@@ -61,7 +61,6 @@ def createIndex(config, instance, **scope):
                         "created_at": {"type": "text"},
                         "date": {"type": "date", "format": "yyyy-MM-dd HH:mm:ss"},
                         "timezone": {"type": "keyword"},
-                        "place": {"type": "keyword"},
                         "location": {"type": "keyword"},
                         "tweet": {"type": "text"},
                         "lang": {"type": "keyword"},
@@ -88,7 +87,20 @@ def createIndex(config, instance, **scope):
                         "geo_tweet": {"type": "geo_point"},
                         "photos": {"type": "text"},
                         "user_rt_id": {"type": "keyword"},
-                        "mentions": {"type": "keyword", "normalizer": "hashtag_normalizer"},
+                        "mentions": {
+                            "type": "nested",
+                            "properties": {
+                                "id": {
+                                    "type": "long"
+                                },
+                                "name": {
+                                    "type": "text"
+                                },
+                                "screen_name": {
+                                    "type": "text"
+                                }
+                            }
+                        },
                         "source": {"type": "keyword"},
                         "user_rt": {"type": "keyword"},
                         "retweet_id": {"type": "keyword"},
@@ -216,7 +228,6 @@ def Tweet(Tweet, config):
                 "created_at": Tweet.datetime,
                 "date": dt,
                 "timezone": Tweet.timezone,
-                "place": Tweet.place,
                 "tweet": Tweet.tweet,
                 "language": Tweet.lang,
                 "hashtags": Tweet.hashtags,
@@ -273,10 +284,6 @@ def Tweet(Tweet, config):
             _is_near_def = getLocation(__near + __geo, near=True)
         if _near:
             j_data["_source"].update({"geo_near": _near})
-    if Tweet.place:
-        _t_place = getLocation(Tweet.place)
-        if _t_place:
-            j_data["_source"].update({"geo_tweet": getLocation(Tweet.place)})
     if Tweet.source:
         j_data["_source"].update({"source": Tweet.Source})
     if config.Translate:
